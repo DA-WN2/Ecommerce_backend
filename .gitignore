@@ -1,0 +1,13 @@
+# Dependency directories (these are huge and should stay local)
+node_modules/
+
+# Environment variables (this contains your MongoDB password!)
+.env
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Build files
+dist/
+build/
