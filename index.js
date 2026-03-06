@@ -42,9 +42,9 @@ if (process.env.NODE_ENV === "production") {
   // Set the static folder for the React build
   app.use(express.static(path.join(__dirname, "/frontend/dist")));
 
-  // THE FIX: Use a named parameter (/:any*) for Express 5 compatibility
+  // THE FIX: Use a catch-all route to serve index.html for all unmatched routes
   // This tells Express to catch all sub-routes and serve index.html
-  app.get("/:any*", (req, res) =>
+  app.get("/*", (req, res) =>
     res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html")),
   );
 } else {
