@@ -20,7 +20,13 @@ connectDB();
 const app = express();
 
 // --- MIDDLEWARE ---
-app.use(cors());
+// CORS is crucial here: it allows your Vercel frontend to talk to this Render backend
+app.use(
+  cors({
+    origin: "*", // For security, you can later change "*" to "https://your-frontend-url.vercel.app"
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 // --- ROUTES ---
@@ -32,23 +38,15 @@ app.use("/api/upload", uploadRoutes);
 
 // --- STATIC FOLDERS ---
 const __dirname = path.resolve();
+// Keep this so uploaded product images still work
 app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
 
-// --- PRODUCTION SETUP ---
-if (process.env.NODE_ENV === "production") {
-  // Set the static folder for the React build
-  app.use(express.static(path.join(__dirname, "/frontend/dist")));
-
-  // THE FIX: Adding ':path' names the parameter to satisfy Express 5's strict routing
-  // The '*' after 'path' allows it to catch all sub-directories (like /cart or /profile)
-  app.get("/:path*", (req, res) =>
-    res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html")),
-  );
-} else {
-  app.get("/", (req, res) => {
-    res.send("API is running...");
-  });
-}
+// --- BASE API ROUTE ---
+// Since the frontend is on Vercel, Render only acts as an API.
+// We removed the Express 5 wildcard route entirely to prevent the PathError.
+app.get("/", (req, res) => {
+  res.send("Backend API is running successfully...");
+});
 
 // --- ERROR HANDLING MIDDLEWARE ---
 app.use((req, res, next) => {
