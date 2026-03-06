@@ -1,29 +1,58 @@
 import Order from "../models/orderModel.js";
 
 // @desc    Create new order (Logged in users)
+// @route   POST /api/orders
 export const addOrderItems = async (req, res) => {
   try {
-    const { orderItems, shippingAddress, totalPrice } = req.body;
+    const {
+      orderItems,
+      shippingAddress,
+      paymentMethod,
+      itemsPrice,
+      taxPrice,
+      shippingPrice,
+      totalPrice,
+    } = req.body;
+
+    // 1. SAFETY CHECK: Ensure req.user exists before accessing ._id
+    if (!req.user) {
+      res.status(401);
+      throw new Error("Not authorized, user data missing from request");
+    }
 
     if (orderItems && orderItems.length === 0) {
       return res.status(400).json({ message: "No order items" });
     } else {
+      // 2. Create the order using the data from Adil's frontend
       const order = new Order({
-        orderItems,
-        user: req.user._id, // Tied to the logged-in user buying the items
+        orderItems: orderItems.map((x) => ({
+          ...x,
+          product: x.product,
+          _id: undefined, // Prevents ID conflicts from the frontend
+        })),
+        user: req.user._id, // This will no longer crash thanks to the check above
         shippingAddress,
+        paymentMethod,
+        itemsPrice,
+        taxPrice,
+        shippingPrice,
         totalPrice,
       });
 
       const createdOrder = await order.save();
+
+      // 3. Return the created order (including the new _id) to the frontend
       res.status(201).json(createdOrder);
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    // Check your terminal to see exactly which field is failing validation
+    console.error("Mongoose Save Error:", error.message);
+    res.status(error.status || 500).json({ message: error.message });
   }
 };
 
 // @desc    Get logged in user orders
+// @route   GET /api/orders/myorders
 export const getMyOrders = async (req, res) => {
   try {
     const orders = await Order.find({ user: req.user._id });
@@ -37,7 +66,6 @@ export const getMyOrders = async (req, res) => {
 // @route   GET /api/orders/:id
 export const getOrderById = async (req, res) => {
   try {
-    // .populate() pulls in the name and email from the User database!
     const order = await Order.findById(req.params.id).populate(
       "user",
       "name email",
@@ -62,7 +90,6 @@ export const updateOrderToPaid = async (req, res) => {
     if (order) {
       order.isPaid = true;
       order.paidAt = Date.now();
-      // This paymentResult would normally come from Stripe or PayPal
       order.paymentResult = {
         id: req.body.id,
         status: req.body.status,
@@ -110,4 +137,3 @@ export const getOrders = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
