@@ -30,9 +30,6 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/upload", uploadRoutes);
 
-// NOTE: We removed the /api/config/paypal route since we are using
-// a simulated payment mechanism now!
-
 // --- STATIC FOLDERS ---
 const __dirname = path.resolve();
 app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
@@ -42,9 +39,9 @@ if (process.env.NODE_ENV === "production") {
   // Set the static folder for the React build
   app.use(express.static(path.join(__dirname, "/frontend/dist")));
 
-  // THE FIX: Use a catch-all route to serve index.html for all unmatched routes
-  // This tells Express to catch all sub-routes and serve index.html
-  app.get("/*", (req, res) =>
+  // THE FIX: Adding ':path' names the parameter to satisfy Express 5's strict routing
+  // The '*' after 'path' allows it to catch all sub-directories (like /cart or /profile)
+  app.get("/:path*", (req, res) =>
     res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html")),
   );
 } else {
@@ -54,14 +51,12 @@ if (process.env.NODE_ENV === "production") {
 }
 
 // --- ERROR HANDLING MIDDLEWARE ---
-// This catches any routes that don't exist
 app.use((req, res, next) => {
   const error = new Error(`Not Found - ${req.originalUrl}`);
   res.status(404);
   next(error);
 });
 
-// This catches any errors thrown in your controllers
 app.use((err, req, res, next) => {
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
   res.status(statusCode).json({
