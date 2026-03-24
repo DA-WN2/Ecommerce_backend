@@ -15,6 +15,11 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    // THE FIX: Added the brand field so the database knows to save it!
+    brand: {
+      type: String,
+      required: true,
+    },
     description: {
       type: String,
       required: true,
