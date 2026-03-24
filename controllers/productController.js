@@ -26,7 +26,6 @@ export const getProductById = async (req, res) => {
 };
 
 // @desc    Create a product (Admin Only)
-
 export const createProduct = asyncHandler(async (req, res) => {
   const product = new Product({
     name: "Sample Name",
@@ -36,7 +35,7 @@ export const createProduct = asyncHandler(async (req, res) => {
     brand: "Sample Brand",
     category: "Sample Category",
     countInStock: 0,
-    numReviews: 0,
+    numReviews: 0, // Note: Make sure numReviews is in your schema too if you use it!
     description: "Sample description",
   });
 
@@ -48,7 +47,8 @@ export const createProduct = asyncHandler(async (req, res) => {
 // @route   PUT /api/products/:id
 export const updateProduct = async (req, res) => {
   try {
-    const { name, price, description, image, category, countInStock } =
+    // THE FIX 1: Added 'brand' to the list of items we pull from the frontend request
+    const { name, price, description, image, brand, category, countInStock } =
       req.body;
 
     const product = await Product.findById(req.params.id);
@@ -58,6 +58,10 @@ export const updateProduct = async (req, res) => {
       product.price = price || product.price;
       product.description = description || product.description;
       product.image = image || product.image;
+
+      // THE FIX 2: Actually tell the database to update the brand!
+      product.brand = brand || product.brand;
+
       product.category = category || product.category;
       product.countInStock = countInStock || product.countInStock;
 
